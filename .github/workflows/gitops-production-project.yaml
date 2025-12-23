@@ -70,9 +70,9 @@ jobs:
       run: |
         git clone "https://x-access-token:${GH_TOKEN}@github.com/arkb2023/todo-app-configs.git"
         cd todo-app-configs/apps/the-project/overlays/prod
-        kustomize edit set image arkb2023/todo-backend:latest=arkb2023/todo-backend:${GITHUB_SHA}
-        kustomize edit set image arkb2023/todo-app:latest=arkb2023/todo-app:${GITHUB_SHA}
-        kustomize edit set image arkb2023/broadcaster:latest=arkb2023/broadcaster:${GITHUB_SHA}
+        kustomize edit set image arkb2023/todo-backend:latest=arkb2023/todo-backend:${{ github.ref_name }}
+        kustomize edit set image arkb2023/todo-app:latest=arkb2023/todo-app:${{ github.ref_name }}
+        kustomize edit set image arkb2023/broadcaster:latest=arkb2023/broadcaster:${{ github.ref_name }}
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
         git add .
