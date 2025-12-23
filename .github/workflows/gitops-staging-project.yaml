@@ -53,9 +53,9 @@ jobs:
         #git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/arkb2023/todo-app-configs.git
         git clone "https://x-access-token:${GH_TOKEN}@github.com/arkb2023/todo-app-configs.git"
         cd todo-app-configs/apps/the-project/overlays/staging
-        kustomize edit set image arkb2023/todo-app:${GITHUB_SHA} --load-restrictor LoadRestrictionsNone
-        kustomize edit set image arkb2023/todo-backend:${GITHUB_SHA} --load-restrictor LoadRestrictionsNone
-        kustomize edit set image arkb2023/broadcaster:${GITHUB_SHA} --load-restrictor LoadRestrictionsNone
+        kustomize edit set image arkb2023/todo-app:${GITHUB_SHA}
+        kustomize edit set image arkb2023/todo-backend:${GITHUB_SHA}
+        kustomize edit set image arkb2023/broadcaster:${GITHUB_SHA}
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
         git add .
