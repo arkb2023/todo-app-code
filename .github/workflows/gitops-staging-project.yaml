@@ -1,0 +1,63 @@
+name: GitOps Staging Project (Todo App + Todo Backend + Broadcaster)
+on:
+  push:
+    branches:
+      - main
+    paths:
+    # Common
+    - 'broadcaster/**'
+    - 'todo_app/**'
+    - 'todo_backend/**'
+
+    # Staging
+    - '.github/workflows/gitops-staging-project.yaml'
+permissions:
+  contents: write        # Push to configs repo
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    #1
+    - uses: actions/checkout@v4
+    #2
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    #3
+    - name: Build Todo Backend App
+      run: |
+        docker build -t arkb2023/todo-backend:${GITHUB_SHA} ./todo_backend
+        docker push arkb2023/todo-backend:${GITHUB_SHA}
+    #4
+    - name: Build Todo frontend App
+      run: |
+        docker build -t arkb2023/todo-app:${GITHUB_SHA} ./todo_app
+        docker push arkb2023/todo-app:${GITHUB_SHA}
+
+    #5
+    - name: Build Broadcaster App
+      run: |
+        docker build -t arkb2023/broadcaster:${GITHUB_SHA} ./broadcaster
+        docker push arkb2023/broadcaster:${GITHUB_SHA}
+    #6
+    - name: Setup Kustomize
+      uses: imranismail/setup-kustomize@v2
+
+    #7
+    - name: Update configs repo  
+      env:
+        GH_TOKEN: ${{ github.token }}  # Built-in, no secrets needed
+      run: |
+        #git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/arkb2023/todo-app-configs.git
+        git clone "https://x-access-token:${GH_TOKEN}@github.com/arkb2023/todo-app-configs.git"
+        cd todo-app-configs/apps/the-project/overlays/staging
+        kustomize edit set image arkb2023/todo-app:${GITHUB_SHA} --load-restrictor LoadRestrictionsNone
+        kustomize edit set image arkb2023/todo-backend:${GITHUB_SHA} --load-restrictor LoadRestrictionsNone
+        kustomize edit set image arkb2023/broadcaster:${GITHUB_SHA} --load-restrictor LoadRestrictionsNone
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add .
+        git commit -m "Update staging images: ${GITHUB_SHA}" || exit 0
+        git push
