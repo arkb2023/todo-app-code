@@ -7,17 +7,8 @@ on:
     # Production triggers on tagged commit
     tags:
       - "v4.9.*"
-    # paths:
-    # # Common
-    # - 'apps/the-project/base/**'
-    # - 'the_project/broadcaster/**'
-    # - 'the_project/todo_app/**'
-    # - 'the_project/todo_backend/**'
-    
-    # # Production
-    # #- 'apps/the-project/argocd-apps/prod-app.yaml'
-    # #- '.github/workflows/gitops-production-project.yaml'
-    # #- 'apps/the-project/overlays/prod/**'
+permissions:
+  contents: write        # Push to configs repo
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -38,36 +29,52 @@ jobs:
     - name: Build Todo Backend App
       run: |
         # 
-        docker build -t arkb2023/todo-backend:${{ github.ref_name }} the_project/todo_backend
+        docker build -t arkb2023/todo-backend:${{ github.ref_name }} ./todo_backend
         docker push arkb2023/todo-backend:${{ github.ref_name }}
     #4
     - name: Build Todo frontend App
       run: |
-        docker build -t arkb2023/todo-app:${{ github.ref_name }} the_project/todo_app
+        docker build -t arkb2023/todo-app:${{ github.ref_name }} ./todo_app
         docker push arkb2023/todo-app:${{ github.ref_name }}
 
     #5
     - name: Build Broadcaster App
       run: |
-        docker build -t arkb2023/broadcaster:${{ github.ref_name }} the_project/broadcaster
+        docker build -t arkb2023/broadcaster:${{ github.ref_name }} ./broadcaster
         docker push arkb2023/broadcaster:${{ github.ref_name }}
     #6
     - name: Setup Kustomize
       uses: imranismail/setup-kustomize@v2
     
-    #7
-    - name: Update images in overlays/prod/kustomization.yaml 
-      working-directory: apps/the-project/overlays/prod
-      run: |
-        git fetch origin main
-        git checkout main
-        kustomize edit set image arkb2023/todo-backend:latest=arkb2023/todo-backend:${{ github.ref_name }}
-        kustomize edit set image arkb2023/todo-app:latest=arkb2023/todo-app:${{ github.ref_name }}
-        kustomize edit set image arkb2023/broadcaster:latest=arkb2023/broadcaster:${{ github.ref_name }}
+    # #7
+    # - name: Update images in overlays/prod/kustomization.yaml 
+    #   working-directory: apps/the-project/overlays/prod
+    #   run: |
+    #     git fetch origin main
+    #     git checkout main
+    #     kustomize edit set image arkb2023/todo-backend:latest=arkb2023/todo-backend:${{ github.ref_name }}
+    #     kustomize edit set image arkb2023/todo-app:latest=arkb2023/todo-app:${{ github.ref_name }}
+    #     kustomize edit set image arkb2023/broadcaster:latest=arkb2023/broadcaster:${{ github.ref_name }}
     
-    #8
-    - name: Commit kustomization changes
-      uses: EndBug/add-and-commit@v9
-      with:
-        add: 'apps/the-project/overlays/prod/kustomization.yaml'
-        message: "GitOps Production Project ${{ github.ref_name }}"
+    # #8
+    # - name: Commit kustomization changes
+    #   uses: EndBug/add-and-commit@v9
+    #   with:
+    #     add: 'apps/the-project/overlays/prod/kustomization.yaml'
+    #     message: "GitOps Production Project ${{ github.ref_name }}"
+
+    #7
+    - name: Update configs repo  
+      env:
+        GH_TOKEN: ${{ secrets.GH_PAT }}  # Built-in, no secrets needed
+      run: |
+        git clone "https://x-access-token:${GH_TOKEN}@github.com/arkb2023/todo-app-configs.git"
+        cd todo-app-configs/apps/the-project/overlays/prod
+        kustomize edit set image arkb2023/todo-backend:latest=arkb2023/todo-backend:${GITHUB_SHA}
+        kustomize edit set image arkb2023/todo-app:latest=arkb2023/todo-app:${GITHUB_SHA}
+        kustomize edit set image arkb2023/broadcaster:latest=arkb2023/broadcaster:${GITHUB_SHA}
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add .
+        git commit -m "Update production images: ${GITHUB_SHA}" || exit 0
+        git push
