@@ -48,7 +48,7 @@ jobs:
     #7
     - name: Update configs repo  
       env:
-        GH_TOKEN: ${{ github.token }}  # Built-in, no secrets needed
+        GH_TOKEN: ${{ secrets.GH_PAT }}  # Built-in, no secrets needed
       run: |
         #git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/arkb2023/todo-app-configs.git
         git clone "https://x-access-token:${GH_TOKEN}@github.com/arkb2023/todo-app-configs.git"
