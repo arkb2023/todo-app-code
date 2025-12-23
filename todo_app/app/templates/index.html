@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>The Project App</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    #ns {
+      position: fixed; top: 10px; right: 10px;
+      font-size: 12px; color: #999;
+      border: 1px solid #ccc; padding: 6px;
+      background: #89b155;
+    }
+    #cache-metadata {
+      position: fixed; bottom: 10px; right: 10px;
+      font-size: 12px; color: #999;
+      border: 1px solid #ccc; padding: 6px;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>The Project App</h1>
+  <hr />
+
+  <!-- Display cached image -->
+  <img src="/{{ namespace }}/image" alt="Random Image" />
+
+  <hr />
+
+  <!-- New Todo input section -->
+  <div>
+    <input type="text" id="todoInput" maxlength="140" placeholder="Enter new todo (max 140 chars)" />
+    <button id="createTodoButton">Create todo</button>
+  </div>
+
+  <!-- Todo list to be dynamically populated -->
+
+  <h3>Todo:</h3>
+  <ul id="todoList"></ul>
+
+  <h3>Done:</h3>
+  <ul id="doneList"></ul>
+  
+  <p>
+    <a href="https://courses.mooc.fi/org/uh-cs/courses/devops-with-kubernetes">
+      DevOps with Kubernetes 2025
+    </a> 
+    University of Helsinki
+  </p>
+
+  <!-- Metadata panel -->
+  <div id="cache-metadata">
+    <b>Image Cache Metadata</b><br />
+    Image Download time: {{ download_time }}<br />
+    Image Expiry time: {{ expiry_time }}<br />
+    Site Access count: {{ access_count }}<br />
+    Image Access count: {{ image_access_count }}<br />
+    Last Site Access: {{ last_access }}<br />
+    Status: {{ grace_status }}<br />
+  </div>
+  <div id="ns">{{namespace}}</div>
+  <script>const backend_api = "{{ backend_api }}";</script>
+  <script src="/{{ namespace }}/static/scripts.js"></script>
+</body>
+</html>

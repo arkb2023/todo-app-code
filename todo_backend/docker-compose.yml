@@ -1,0 +1,112 @@
+
+services:
+  db:
+    image: postgres:latest
+    container_name: pg-container
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: testdbuser
+      POSTGRES_PASSWORD: testdbuserpassword
+      POSTGRES_DB: tododb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testdbuser -d tododb"]
+      interval: 5s
+      retries: 5
+
+  app:
+    build: .                      # build in current directory (project root)
+    container_name: backend-app-container
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:3000"
+    environment:
+      DATABASE_URL: postgres://testdbuser:testdbuserpassword@db:5432/tododb
+      # Individual vars your app expects
+      DB_HOST: db
+      DB_PORT: "5432"
+      POSTGRES_DB: tododb
+      POSTGRES_USER: testdbuser
+      POSTGRES_PASSWORD: testdbuserpassword
+      LOG_LEVEL: INFO
+      # Point to existing k3d NATS via host port-forward
+      NATS_URL: "nats://host.docker.internal:4222"
+volumes:
+  pgdata:
+
+# Usage:
+# docker-compose up -d
+# docker-compose down
+# To view logs: docker-compose logs -f app
+# To enter the app container: docker exec -it app-docker /bin/sh
+# To enter the db container: docker exec -it pg-docker /bin/sh
+# Make sure to have Docker and Docker Compose installed on your machine.
+# The app service will be accessible at http://localhost:8000
+# The PostgreSQL database will be accessible at localhost:5432
+# Adjust environment variables as needed for your setup.
+# Ensure you have a Dockerfile in the same directory to build the app service.
+# This docker-compose file sets up a FastAPI backend with a PostgreSQL database.
+# Modify the DATABASE_URL in the app service environment to match your database credentials.
+# The database URL format is: postgres://<username>:<password>@<host>:<port>/<database_name>
+# In this setup, the db service uses a volume (pgdata) to persist database data.
+# The app service depends on the db service, ensuring the database starts first.
+# You can scale the app service by using: docker-compose up -d --scale app=<number_of_instances>
+# Make sure to adjust the database connection settings in your FastAPI application accordingly.
+# For development purposes, you might want to add a volume to the app service to mount your code:
+#    volumes:
+#      - ./:/app
+# This allows you to see code changes without rebuilding the Docker image.
+# Remember to run 
+# `docker-compose down -v` to remove the containers and associated volumes when done.
+# Adjust the PostgreSQL credentials and database name as per your requirements.
+# This docker-compose file is a basic setup for local development and testing.
+# For production deployments, consider using environment files or secret management for sensitive data.
+# Also, consider using a more robust database setup with backups and monitoring for production.
+# Ensure to have proper network configurations if deploying in a multi-host environment.
+# You can customize the Dockerfile to include additional dependencies or configurations as needed.
+# This setup is intended for local development and testing purposes.
+# For production use, consider additional configurations for security, logging, and monitoring.
+# Always refer to the official Docker and Docker Compose documentation for best practices and advanced configurations.
+# End of docker-compose.yml
+# docker-compose up --build 
+# docker-compose logs -f app
+# docker-compose logs -f db
+# curl http://localhost:8000/todos
+# docker-compose down -v
+# # Add a todo:
+# http POST http://localhost:8000/todos title="Sample Todo" description="This is a sample todo item."
+# ping-pong [main]$ http GET http://localhost:8000/
+# HTTP/1.1 200 OK
+# content-length: 33
+# content-type: application/json
+# date: Thu, 27 Nov 2025 11:53:44 GMT
+# server: uvicorn
+
+# {
+#     "message": "Todo API is running"
+# }
+
+
+# ping-pong [main]$
+# ping-pong [main]$ http GET http://localhost:8000/todos
+# HTTP/1.1 404 Not Found
+# content-length: 22
+# content-type: application/json
+# date: Thu, 27 Nov 2025 11:53:48 GMT
+# server: uvicorn
+
+# {
+#     "detail": "Not Found"
+# }
+
+
+# ping-pong [main]$
+
+
+# # docker exec -it pg-docker psql -U testdbuser -d tododb

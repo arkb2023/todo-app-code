@@ -1,0 +1,35 @@
+services:
+  broadcaster:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    #container_name: broadcaster-dev
+    environment:
+      # Point to existing k3d NATS via host port-forward
+      NATS_URL: "nats://host.docker.internal:4222"
+      # Slack webhook - load from env
+      SLACK_WEBHOOK_URL: "${SLACK_WEBHOOK_URL}"
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+
+# ensure NATS port-forward is running on host
+# kubectl -n default port-forward svc/nats 4222:4222
+# nats --server nats://127.0.0.1:4222 sub 'todos.>'
+# 10:04:52 Subscribing on todos.>
+# [#1] Received on "todos.created"
+
+# Subscriber
+# cd broadcaster
+# export SLACK_WEBHOOK_URL='https://hooks.slack.com/services/...'
+# docker compose -f docker-compose.dev.yml down
+# docker compose -f docker-compose.dev.yml up --build
+# docker compose -f docker-compose.dev.yml up --build --scale broadcaster=3
+
+
+# Publisher
+# nats --server nats://127.0.0.1:4222 pub 'todos.created' '{"id": 1, "text": "Test todo 1", "completed": false}'
+# 14:08:43 Published 50 bytes to "todos.created"
+
+# docker compose -f docker-compose.dev.yml restart broadcaster-dev

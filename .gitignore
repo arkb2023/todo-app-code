@@ -1,0 +1,5 @@
+.env*
+broadcaster/.env.local
+__pycache__/
+*.pyc
+.vscode/
